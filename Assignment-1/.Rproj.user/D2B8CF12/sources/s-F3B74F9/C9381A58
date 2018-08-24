@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1535101170763.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "C9381A58",
+    "lastKnownWriteTime" : 1535101381,
+    "last_content_update" : 1535101381218,
+    "path" : "~/GitHub/finmetrics-assignments/Assignment-1/readme.Rmd",
+    "project_path" : "readme.Rmd",
+    "properties" : {
+        "cursorPosition" : "18,3",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

@@ -1,0 +1,19 @@
+---
+title: "Readme"
+author: "Jannes Reddig"
+date: "August 24, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Aim
+
+This is a directory for submission of assignment one for the financial econometrics course.
+
+For convenience the outputs are displayed below
+
+
+## 
