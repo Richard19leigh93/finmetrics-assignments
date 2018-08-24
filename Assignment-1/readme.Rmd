@@ -3,9 +3,10 @@ title: "Readme"
 author: "Jannes Reddig"
 date: "August 24, 2018"
 output: 
-    toc: true
-    toc_depth: 2
-    toc_float: True
+    html_document:
+        toc: true
+        toc_depth: 2
+        toc_float: True
 ---
 
 ```{r setup, include=FALSE}
