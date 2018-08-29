@@ -1,0 +1,209 @@
+---
+title: "Readme"
+author: "Jannes Reddig"
+date: "August 24, 2018"
+output: html_document
+---
+
+
+
+# Aim
+
+This is analyses BRICS data
+
+
+## Load Packages and Data
+```{r}
+library(rmsfuns)
+load_pkgs <- c("xts", "tidyverse", "tbl2xts", "PerformanceAnalytics",
+               "lubridate", "glue")
+load_pkg(load_pkgs)
+
+# data <- read_csv("https://raw.githubusercontent.com/Nicktz/ExDat/master/extdata/BRICSTRI.csv")
+# write.csv(x = data, file="data/BRICSTRI.csv")
+
+data <- read_csv("data/BRICSTRI.csv")
+
+```
+
+
+## Manipulated Data
+
+```{R}
+
+# select data
+data_zar <- data %>% select(Date, zar)
+
+# add columns
+data_zarbrz <- data %>% mutate(zarbrz = zar + brz)
+
+# mutate several columns
+# sets brz and zar varaibles to their mean for all values
+# removes missing values
+data_mutate_means <- 
+  data %>% 
+  mutate_at(.vars = vars(brz, zar), .funs = funs(mean(., na.rm = TRUE)))
+
+# pass a list of variables to mutate
+vars_to_process = c("ind", "zar")
+data %>% mutate_at(.vars = vars_to_process, .funs = funs(Sum_of = sum(., 
+    na.rm = TRUE), mean_of = mean(., na.rm = TRUE))) %>% head()
+
+# summarise a column
+data %>% summarise(zarmean = mean(zar, na.rm = TRUE))
+
+# summarise all columns
+
+data %>% summarise_all(.funs = funs(mean(., na.rm = TRUE)))
+
+# summarise a list of columns
+vars_to_summ = c("ind", "zar")
+data %>% summarise_at(.vars = vars_to_summ, .funs = funs(mean(., 
+    na.rm = TRUE), sd(., na.rm = TRUE)))
+```
+
+## Manipulate Dates
+
+```{r}
+#lubridate - lubrication for dates in R
+# already loaded in tidyverse
+#load_pkg("lubridate") 
+
+data %>% mutate(Date = ymd(Date) ) %>% # Make Date column a lubridate column
+  filter(Date >= ymd(20070806)) %>% 
+  mutate(Date = as.Date(Date)) # Put back as as.Date if choose to..
+
+
+# although the columns are arranged by date, make sure of it
+# first:
+d1 <- 
+  data %>% 
+  arrange(Date) %>%
+  mutate_at(.vars = vars(-Date), .funs = funs(./lag(.) - 1))
+```
+
+## The poweR of dplyr
+
+```{r}
+# convert date to long format
+# unleashes power of dplyr
+long_format_data <- 
+  data %>% 
+  gather(Country, TRI, -Date)
+  group_by(Country) %>% 
+  mutate(Return = TRI/lag(TRI) - 1) %>% 
+  ungroup()
+
+# check for missing values
+colSums(is.na(data))
+
+# calculate log difference of each column
+d2 <- 
+  data %>% 
+  arrange(Date) %>% 
+  mutate_at(.vars = vars(brz:zar), .funs = funs(log(.) - log(lag(.))))
+```
+
+## The Performance Analytics Package
+
+This package is powerful, but comes at the cost of moving between dplyr and xts formats: use the tbl2xts package to facilitate this transition.
+
+```{r}
+load_pkg(c("tbl2xts", "PerformanceAnalytics"))
+
+
+
+# Change tbldiff to xts. 
+# This format can be piped into PA:
+d3 <- 
+  data %>% 
+  tbl_xts(.) %>% 
+  Return.calculate(., method = c("compound", "simple")[1])
+
+dom <- function(x) format(as.Date(x), "%B")
+year <- function(x) format(as.Date(x), "%Y")
+# The following creates a Year and Month column:
+cumdata <- 
+  data %>% 
+  mutate(Month = dom(data$Date), Year = year(data$Date))
+
+# Let's create a vector of all the numeric columns:
+num.columns <- colnames( cumdata[,sapply(cumdata, is.numeric)] )
+
+# Now we can use group_by() to calculate the monthly dlog returns for each column:
+cumdata <- 
+  cumdata %>% arrange(Date) %>% 
+  mutate_at(.vars = num.columns, .funs = funs((log(.)-log(lag(.))))) %>% 
+  group_by(Year, Month) %>% 
+  summarise_at( .vars = num.columns, .funs = funs(sum(., na.rm = TRUE))) %>% 
+  .[match(month.name, .$Month),] %>% # do this, else months are alphabetical
+  ungroup()
+
+IndexReturns <- 
+  data %>% 
+  arrange(Date) %>%
+  mutate_at(num.columns, .funs = funs(./lag(.) - 1)) %>% 
+  na.omit() %>% 
+  mutate(Index = rowSums(.[,num.columns]))
+
+```
+
+
+```{r}
+data1 <- 
+  bind_rows(
+  bind_rows(
+  data.frame(
+  date = ymd(20020131),
+  Universe = "JALSH",
+  Tickers = rep(paste0(c("AAA", "BBB", "CCC", "DDD", "EEE", "FFF"), " SJ Equity"), 6),
+  SubFactors = rep(c("ROE", "ROA", "EBIT.EV", "FCF.EV", "Volat.D.60", "TRR6M1M"),each  = 6),
+  Sectors = rep(c("Fin", "Ind", "Cons", "Fin", "Fin", "Ind"), 6),
+  Currencies = "ZAR",
+  Score = rnorm(36, 13, 4)) %>% 
+  tbl_df() %>% 
+  mutate(date = ymd(date)) %>% 
+  mutate_at(.vars = vars(-date, -Score), .funs = funs(as.character)),
+  data.frame(date = ymd(20020131),
+  Universe = "SPGLOB",
+  Tickers = rep(paste0(c("TTT", "UUU", "VVV", "XXX", "YYY", "ZZZ"), " SPGLOB Equity"), 6),
+  SubFactors = rep(c("ROE", "ROA", "EBIT.EV", "FCF.EV", "Volat.D.60", "TRR6M1M"), each = 6),
+  Sectors = rep(c("Fin", "Ind", "Cons", "Fin", "Fin", "Ind"), 6),
+  Currencies = "Dollar",
+  Score = rnorm(36)) %>% 
+  tbl_df() %>%
+  mutate(date = ymd(date)) %>% 
+  mutate_at(.vars = vars(-date, -Score), .funs = funs(./lag(.) - 1))),
+  bind_rows(
+  data.frame(
+  date = ymd(20020228),
+  Universe = "JALSH",
+  Tickers = rep(paste0(c("AAA", "BBB", "CCC", "DDD", "EEE", "FFF"), " SJ Equity"), 6),
+  SubFactors = rep(c("ROE", "ROA", "EBIT.EV", "FCF.EV", "Volat.D.60", "TRR6M1M"),each  = 6),
+  Sectors = rep(c("Fin", "Ind", "Cons", "Fin", "Fin", "Ind"), 6),
+  Currencies = "ZAR",
+  Score = rnorm(36, 10, 4)) %>% 
+  tbl_df() %>% 
+  mutate(date = ymd(date)) %>% 
+  mutate_at(.vars = vars(-date, -Score), .funs = funs(as.character)),
+  data.frame(date = ymd(20020228),
+  Universe = "SPGLOB",
+  Tickers = rep(paste0(c("TTT", "UUU", "VVV", "XXX", "YYY", "ZZZ"), " SPGLOB Equity"), 6),
+  SubFactors = rep(c("ROE", "ROA", "EBIT.EV", "FCF.EV", "Volat.D.60", "TRR6M1M"), each = 6),
+  Sectors = rep(c("Fin", "Ind", "Cons", "Fin", "Fin", "Ind"), 6),
+  Currencies = "Dollar",
+  Score = rnorm(36)) %>% 
+  tbl_df() %>% mutate(date = ymd(date)) %>% 
+  mutate_at(.vars = vars(-date, -Score), .funs = funs(as.character)))) %>% 
+  filter(!is.na(Universe))
+#  View(data)
+ 
+
+datawide <- 
+  data %>% 
+  select(-Sectors, -Currencies, -Universe) %>% 
+  spread(key = Tickers, value = Score) %>% 
+  mutate(Universe = "JALSH", AnotherColumn = "Random") # Add some noise columns
+
+head(datawide)
+```

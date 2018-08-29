@@ -1,0 +1,216 @@
+---
+title: "DailyTRI_Practical"
+author: "Jannes Reddig"
+date: "August 24, 2018"
+output: html_document
+---
+
+```{r setup, include=False}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Aim
+
+This practical compares index returns.
+
+It first displayes worked tutorials and then the assignement.
+
+## Practical 
+
+```{r}
+library(rmsfuns)
+load_pkgs <- c("xts", "tidyverse", "tbl2xts", "PerformanceAnalytics", "lubridate", "glue")
+load_pkg(load_pkgs)
+
+dailydata <- read_csv("https://raw.githubusercontent.com/Nicktz/ExDat/master/extdata/DailyTRIs.csv",
+col_types = cols(.default = "d", Date = "D")) 
+
+write.csv(dailydata, "data/daily_tris.csv")
+data <- read_csv("data/daily_tris.csv", col_types = cols(.default = "d", Date = "D")) 
+
+
+
+# shows that a few columns have missing values
+colSums(is.na(data))
+
+# focus analysis on 3 companies for now
+data %>% select(Date, "SLM SJ", "SOL SJ", "TKG SJ") %>% tbl_xts() 
+
+# Can remove the "SJ" from column names so you don't need quote them
+# To fix this, replace the space with an _ in all columns as follows:
+colnames(data) <- 
+  gsub(" SJ","",colnames(data)) #removes SJ from all column names
+
+# now we can pipe to xts
+xts.data <- 
+  data %>% 
+  select(Date, SLM, SOL) %>% 
+  tbl_xts() 
+
+# now plotting is simple
+plot(xts.data[,'SLM'], major.ticks='years',
+     minor.ticks = FALSE, main = 'Sanlam', col=3, ylab='SLM SJ TRI')
+
+# or calculate returns
+xts.data.dailyreturns <- diff.xts(xts.data, lag = 1, log = F, arithmetic = F) - 1
+
+plot(xts.data.dailyreturns)
+
+```
+
+
+## Calculating Returns
+
+```{r}
+# Step one: gather to make tidy:
+Data_Adj <- 
+  data %>% 
+  gather(Stocks, Price, -Date) %>% 
+  # Then arrange by date (as we'll be using lags)...
+  arrange(Date) %>% 
+  # Now calculate ordinary returns per stock:
+  group_by(Stocks) %>% 
+  mutate(Returns = Price / lag(Price) - 1) %>% 
+  ungroup() 
+
+#------------------ 
+# Second: Calculate Cumulative Returns
+CumRets <- 
+  Data_Adj %>%
+  # for cumulative returns - we have to change NA to zero, else an NA would break the chain....
+  mutate(Returns = coalesce(Returns, 0)) %>% # Any NA in Returns is changed to zero
+  group_by(Stocks) %>% 
+  mutate(Cum_Ret = cumprod(1+Returns)) 
+
+# Bonus: Figure for Naspers:
+ggplot(CumRets %>% 
+  filter(Stocks == "NPN")) + 
+  geom_line(aes(Date, Cum_Ret), color = "steelblue") +
+  theme_bw() + 
+  labs(title = "Naspers cumulative Return", y = "Growth of R1 invested in 2003.")
+
+
+#------------------ 
+# Third: Calculate Equal weighted portfolio return
+# First date wrangle...
+Trimmed_Ret_Data <- 
+  Data_Adj %>% 
+  filter(Date >= ymd(20100412) & Date < ymd(20150801))
+  
+# Now, we will be using PerformanceAnalytics'  Return.portfolio() which, 
+# if you type: ?Return.portfolio, # shows that it wants the weight vector 
+# as xts (with stock names and weights), as well as the returns in xts.
+# ...With tbl2xts, this is trivial.
+
+# First the weights:
+W_xts <- 
+  Trimmed_Ret_Data %>% 
+  # Check this cool trick:
+  filter(Date == first(Date)) %>% 
+  mutate(weight = 1/n()) %>% 
+  tbl_xts(., cols_to_xts = "weight", spread_by = "Stocks")
+
+# Now Returns:
+R_xts <- 
+  Trimmed_Ret_Data %>% 
+  tbl_xts(., cols_to_xts = "Returns", spread_by = "Stocks")
+
+# Now it is simply...
+
+Portfolio <- 
+  Return.portfolio(R = R_xts, weights = W_xts, geometric = TRUE)
+
+Portf_Rets <- 
+  Portfolio$portfolio.returns %>% 
+  xts_tbl() # because who has time for xts now...
+
+# And that's a wrap. Simple!
+```
+
+## Plotting Functionalities
+
+```{r}
+chart.Histogram(xts.data.dailyreturns$SLM, methods = "add.normal", 
+    main = "Sanlam Histogram")
+
+# Add normal line and VaR estimates
+chart.Histogram(xts.data.dailyreturns$SLM, methods = c("add.density", 
+    "add.normal", "add.risk"), main = "Adding Value at Risk (95%)")
+
+# returns boxplot
+chart.Boxplot(xts.data.dailyreturns$SLM, main = "Sanlam Boxplot")
+
+# qq-plot of sanlam
+chart.QQPlot(xts.data.dailyreturns$SLM, distribution = "norm", 
+    main = "QQ-Plot of Sanlam")
+
+# drawdowns
+chart.Drawdown(xts.data.dailyreturns$SLM, main = "Drawdowns: Sanlam", 
+    col = "steelblue")
+
+# cumulative returns
+chart.CumReturns(xts.data.dailyreturns$SLM, main = "Drawdowns: Sanlam", 
+    col = "steelblue")
+
+# scatter plot of returns between stocks
+chart.Scatter(x = xts.data.dailyreturns$SLM, y = xts.data.dailyreturns$SOL, 
+    main = "Scatter: Sanlam & Sasol", col = "steelblue", xlab = "Sanlam", 
+    ylab = "Sasol")
+
+# risk-return scatter plot
+chart.RiskReturnScatter(R = xts.data.dailyreturns)
+
+# rolling performance
+chart.RollingPerformance(R = xts.data.dailyreturns, FUN = "sd", 
+    width = 120, main = "Rolling 120 day Standard Deviation", 
+    legend.loc = "bottomleft")
+
+# statistics tables of sanlam and sasol (defined by xts.data.dailyreturns)
+# can also use for larger xts objects
+table.Stats(xts.data.dailyreturns)
+
+# trailing returns table for sanlam and sasol
+table.TrailingPeriods(R = xts.data.dailyreturns, periods = c(3, 
+    6, 12, 36, 60))
+
+# downside risk tables
+table.DownsideRisk(xts.data.dailyreturns)
+
+
+data(managers)
+
+Rf <- managers$"US 3m TR"  # Risk-free rate
+Rb <- managers$"SP500 TR"  # Benchmark
+
+# CAPM Beta:
+CAPM.beta(Ra = managers$HAM1, Rb = Rb, Rf = Rf)
+```
+
+# More Advanced Dataset
+## Daily prices of SA, SP500 and NKY stocks from 2017.
+
+```{r}
+Daily_TRI <- 
+  read_rds("data/Fin_Data_SA_US_NKY.rds")
+
+Daily_TRI %>% head()
+
+# Below is a quick way of pulling and looking at the unique Short.Names
+Daily_TRI %>% pull(Short.Name ) %>% unique() %>% View
+
+# filter to three big tech companies
+Daily_TRI_BigthreeTech <- 
+  Daily_TRI %>% 
+  filter(Short.Name %in% c( "NASPERS LTD-N", "APPLE INC", "ALPHABET INC-A")) %>% 
+  group_by(Ticker)%>% 
+  mutate(Returns = TRI/lag(TRI) - 1) %>% 
+  ungroup()
+
+# calculate cumulative returns for three big tech companies
+Daily_TRI_BigthreeTech %>% 
+  mutate(Returns = coalesce(Returns, 0)) %>%  # Override Return column NAs...
+  group_by(Ticker) %>%
+  mutate(Cum_Return = cumprod( 1 + Returns)) 
+
+```
+

@@ -1,0 +1,48 @@
+---
+title: "Readme"
+author: "Jannes Reddig"
+date: "August 24, 2018"
+output: html_document
+---
+
+
+
+# Aim
+
+This is compares the financial and industrial returns for 2017.
+
+
+## 
+```{r}
+library(rmsfuns)
+load_pkgs <- c("xts", "tidyverse", "tbl2xts", "PerformanceAnalytics",
+               "lubridate", "glue")
+load_pkg(load_pkgs)
+
+
+data <- read_rds("Data/J200.rds")
+
+```
+
+
+```{r}
+# To achieve the above, we need to now do the following:
+  # Step one is to calculate the daily returns, and then calculate the Monthly minimum and maximum for each stock.
+  # Only then do we calculate the monthly returns for each stock:
+
+Tidy_dailydata_Adjusted_No_Full_NA_Per_Month %>% 
+  mutate(Year_Month = format(Date, "%Y%B")) %>% 
+  arrange(Date) %>%  # Make sure your date column is arranged from earliest to most recent...
+  # mutate_at has the following notation:  mutate_at( vars(columns to mutate), funs(functions to use   on the columns) )
+  group_by(Ticker) %>% 
+  mutate(DailyReturn = Prices / lag(Prices) - 1) %>% 
+  group_by( Year_Month, Ticker) %>% 
+  mutate_at( vars(DailyReturn), funs( min(., na.rm = TRUE), 
+                                      max(., na.rm = TRUE), mean(., na.rm = TRUE)) ) %>% 
+  filter(Date == last(Date)) %>% 
+  group_by(Ticker) %>% # Careful - if you kept the group_by(Year_Month, Ticker) - it would have led to only NAs, as eah Month, Ticker only now has one value - and we need only group_by Ticker..
+  mutate(Monthly_Returns = Prices / lag(Prices) - 1) %>% 
+  arrange(Ticker) %>% 
+  ungroup() %>% 
+  select(Date, Ticker, DailyReturn:Monthly_Returns)
+```
