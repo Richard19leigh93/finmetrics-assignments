@@ -73,6 +73,7 @@ Cap_Weighted_monthly_index_returns %>%
   geom_line(aes(date, WeightedReturn, color=BICS_LEVEL_1_SECTOR_NAME))+
   facet_wrap(~Universe) +
   theme(axis.text.x = element_text(angle=90))
+
   
   
 

@@ -1,0 +1,181 @@
+---
+title: "Readme"
+author: "Jannes Reddig"
+date: "August 24, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Aim
+
+This asssignment compares index returns for the JALSHAll, NKY, and NKY.
+
+### Folder Structure
+
+ - Data folder contains data
+ - Code folder contains code for practicals done in class
+ - bin is there for all figures and graphs
+
+Some of the code is messy and I'm not sure whether on the right track. Surely there is an easier way.
+
+# Assignment
+
+```{r, include=FALSE}
+# load libraries
+library(rmsfuns)
+load_pkgs <- c("xts", "tidyverse", "tbl2xts", "PerformanceAnalytics", "lubridate", "glue",
+               "knitr", "kableExtra")
+load_pkg(load_pkgs)
+
+
+# load dataset for assignment
+Daily_TRI <- read_rds("data/Fin_Data_SA_US_NKY.rds")
+
+# drop NAs from data
+Daily_TRI_NA_omit <- 
+  Daily_TRI %>% 
+  na.omit()
+
+
+```
+
+### 1. Cap-weighted monthly index returns for every sector for each country.
+
+```{r}
+
+Cap_Weighted_monthly_index_returns <- 
+  Daily_TRI_NA_omit %>% 
+  arrange(date) %>% 
+  mutate(YearMonths = format(date,"%Y_%B")) %>%
+  group_by(YearMonths, Short.Name) %>% 
+  filter(date == last(date)) %>%
+  ungroup() %>% 
+  group_by(Ticker) %>% 
+  mutate(Returns = TRI/lag(TRI)-1) %>%
+  mutate(Returns = coalesce(Returns, 0)) %>%
+  ungroup() %>% 
+  group_by(Universe, BICS_LEVEL_1_SECTOR_NAME, date) %>% 
+  mutate(MarketCap_Sector = sum(Market.Cap)) %>% 
+  mutate(Weight = Market.Cap/MarketCap_Sector) %>% 
+  mutate(PortfolioReturn = sum(Returns*Weight)) %>% 
+  summarise(WeightedReturn = mean(PortfolioReturn)) %>%
+  ungroup()
+
+
+
+#graph cap-weighted returns by sector and by country
+Cap_Weighted_monthly_index_returns %>% 
+  arrange(date) %>% 
+  ggplot() +
+  geom_line(aes(date, WeightedReturn, color=BICS_LEVEL_1_SECTOR_NAME))+
+  facet_wrap(~Universe) +
+  theme(axis.text.x = element_text(angle=90))
+
+  
+  
+
+#graph cap-weighted returns by sector communication sector by country
+Cap_Weighted_monthly_index_returns %>% 
+  filter(BICS_LEVEL_1_SECTOR_NAME == "Communications") %>% 
+  ggplot() +
+  geom_line(aes(date, WeightedReturn, color=Universe))
+
+
+```
+
+
+
+### 2. Calculate the sharpe ratio for the equally weighted by country, cap-weighted index returns since 2017.
+
+```{r}
+Cap_Weighted_monthly_index_sharp_ratios <- 
+  Cap_Weighted_monthly_index_returns %>% 
+  arrange(date) %>%  
+  group_by(Universe, BICS_LEVEL_1_SECTOR_NAME) %>% 
+  # Calculate each stock's Sharpe Ratio:
+  summarise(Sharpe = mean(WeightedReturn, na.rm = TRUE) / sd(WeightedReturn, na.rm = TRUE)) %>% 
+  ungroup() 
+  
+kable(Cap_Weighted_monthly_index_sharp_ratios) %>% 
+kable_styling(bootstrap_options = "striped", full_width = F)
+
+```
+
+### 3. Plot all the cumulative returns for the Financials indexes of the three countries - whose Financials index outperformed?
+
+The JALSHAll Financial Index outperformed both the SP500 and the NKY at the end of the period.
+
+
+```{r}
+financial_index_performance <- 
+  Cap_Weighted_monthly_index_returns %>% 
+  filter(BICS_LEVEL_1_SECTOR_NAME %in% "Financials") %>% 
+  group_by(Universe) %>% 
+  mutate(CumReturns = cumprod(1+WeightedReturn))
+
+ggplot(financial_index_performance) +
+geom_line(aes(date, CumReturns, color=Universe))
+  
+```
+
+### 4. Calculate the JALSH index returns, by filtering the top 95% of Market Cap. (Tip: use arrange and cumsum of weights… careful with your group_bys…)
+
+```{r}
+Cap_Weighted_monthly_JALSHAll <- 
+  Daily_TRI_NA_omit %>% 
+  arrange(date) %>% 
+  mutate(YearMonths = format(date,"%Y_%B")) %>%
+  group_by(YearMonths, Short.Name) %>% 
+  filter(date == last(date)) %>%
+  ungroup() %>% 
+  group_by(Ticker) %>% 
+  mutate(Returns = TRI/lag(TRI)-1) %>%
+  mutate(Returns = coalesce(Returns, 0)) %>%
+  ungroup() %>% 
+  filter(Universe %in% "JALSHAll") %>% 
+  group_by(date) %>% 
+  mutate(MarketCap = sum(Market.Cap)) %>% 
+  mutate(Weight = Market.Cap/MarketCap) %>% 
+  arrange(Weight) %>% 
+  mutate(CumWeight = cumsum(Weight)) %>% 
+  filter(CumWeight >= 0.05) %>% 
+  mutate(PortfolioReturn = sum(Returns*Weight)) %>%
+  summarise(WeightedReturn = mean(PortfolioReturn)) %>%
+  ungroup()
+
+ggplot(Cap_Weighted_monthly_JALSHAll) +
+geom_line(aes(date, WeightedReturn))
+
+```
+
+
+
+### 5. Calculate and visually compare the rolling 60 day standard deviation for the Materials sectors of each country.
+
+
+```{r}
+
+Cap_Weighted_daily_material_sector_returns <- 
+  Daily_TRI_NA_omit %>% 
+  arrange(date) %>% 
+  filter(BICS_LEVEL_1_SECTOR_NAME %in% "Materials") %>% 
+  group_by(Ticker) %>% 
+  mutate(Returns = TRI/lag(TRI)-1) %>%
+  mutate(Returns = coalesce(Returns, 0)) %>%
+  ungroup() %>% 
+  group_by(Universe, date) %>% 
+  mutate(MarketCap_Sector = sum(Market.Cap)) %>% 
+  mutate(Weight = Market.Cap/MarketCap_Sector) %>% 
+  mutate(PortfolioReturn = sum(Returns*Weight)) %>% 
+  summarise(WeightedReturn = mean(PortfolioReturn)) %>%
+  ungroup() %>% 
+  tbl_xts(., cols_to_xts = "WeightedReturn", spread_by = "Universe")
+
+
+chart.RollingPerformance(R = Cap_Weighted_daily_material_sector_returns, FUN = "sd", 
+    width = 60, main = "Rolling 60 Day Standard Deviation", 
+    legend.loc = "bottomleft")
+```

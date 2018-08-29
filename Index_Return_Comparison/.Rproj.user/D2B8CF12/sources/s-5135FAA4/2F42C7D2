@@ -1,0 +1,29 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1535576114614.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "2F42C7D2",
+    "lastKnownWriteTime" : 7598543857515717481,
+    "last_content_update" : 1535576114614,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "1175BF53",
+        "caption" : "Cap_Weighted_monthly_index_returns",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=Cap_Weighted_monthly_index_returns&cache_key=1175BF53",
+        "displayedObservations" : 377,
+        "environment" : "",
+        "object" : "Cap_Weighted_monthly_index_returns",
+        "preview" : 0,
+        "totalObservations" : 377,
+        "variables" : 4
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}
