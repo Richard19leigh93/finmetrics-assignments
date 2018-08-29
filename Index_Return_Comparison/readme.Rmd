@@ -5,7 +5,7 @@ date: "August 24, 2018"
 output: html_document
 ---
 
-```{r setup, include=False}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This asssignment compares index returns for the JALSHAll, NKY, and NKY.
 
-## Folder Structure
+### Folder Structure
 
  - Data folder contains data
  - Code folder contains code for practicals done in class
@@ -23,11 +23,13 @@ Some of the code is messy and I'm not sure whether on the right track. Surely th
 
 # Assignment
 
-```{r}
+```{r, include=FALSE}
 # load libraries
 library(rmsfuns)
-load_pkgs <- c("xts", "tidyverse", "tbl2xts", "PerformanceAnalytics", "lubridate", "glue")
+load_pkgs <- c("xts", "tidyverse", "tbl2xts", "PerformanceAnalytics", "lubridate", "glue",
+               "knitr", "kableExtra")
 load_pkg(load_pkgs)
+
 
 # load dataset for assignment
 Daily_TRI <- read_rds("data/Fin_Data_SA_US_NKY.rds")
@@ -40,7 +42,7 @@ Daily_TRI_NA_omit <-
 
 ```
 
-## Cap-weighted monthly index returns for every sector for each country.
+### 1. Cap-weighted monthly index returns for every sector for each country.
 
 ```{r}
 
@@ -69,7 +71,9 @@ Cap_Weighted_monthly_index_returns %>%
   arrange(date) %>% 
   ggplot() +
   geom_line(aes(date, WeightedReturn, color=BICS_LEVEL_1_SECTOR_NAME))+
-  facet_wrap(~Universe)
+  facet_wrap(~Universe) +
+  theme(axis.text.x = element_text(angle=90))
+  
   
 
 #graph cap-weighted returns by sector communication sector by country
@@ -83,7 +87,7 @@ Cap_Weighted_monthly_index_returns %>%
 
 
 
-## Calculate the sharpe ratio for the equally weighted by country, cap-weighted index returns since 2017.
+### 2. Calculate the sharpe ratio for the equally weighted by country, cap-weighted index returns since 2017.
 
 ```{r}
 Cap_Weighted_monthly_index_sharp_ratios <- 
@@ -92,12 +96,14 @@ Cap_Weighted_monthly_index_sharp_ratios <-
   group_by(Universe, BICS_LEVEL_1_SECTOR_NAME) %>% 
   # Calculate each stock's Sharpe Ratio:
   summarise(Sharpe = mean(WeightedReturn, na.rm = TRUE) / sd(WeightedReturn, na.rm = TRUE)) %>% 
-  ungroup() %>% 
-  knitr::kable()
+  ungroup() 
+  
+kable(Cap_Weighted_monthly_index_sharp_ratios) %>% 
+kable_styling(bootstrap_options = "striped", full_width = F)
 
 ```
 
-## Plot all the cumulative returns for the Financials indexes of the three countries - whose Financials index outperformed?
+### 3. Plot all the cumulative returns for the Financials indexes of the three countries - whose Financials index outperformed?
 
 The JALSHAll Financial Index outperformed both the SP500 and the NKY at the end of the period.
 
@@ -114,7 +120,7 @@ geom_line(aes(date, CumReturns, color=Universe))
   
 ```
 
-## Calculate the JALSH index returns, by filtering the top 95% of Market Cap. (Tip: use arrange and cumsum of weights… careful with your group_bys…)
+### 4. Calculate the JALSH index returns, by filtering the top 95% of Market Cap. (Tip: use arrange and cumsum of weights… careful with your group_bys…)
 
 ```{r}
 Cap_Weighted_monthly_JALSHAll <- 
@@ -146,7 +152,7 @@ geom_line(aes(date, WeightedReturn))
 
 
 
-## Calculate and visually compare the rolling 60 day standard deviation for the Materials sectors of each country.
+### 5. Calculate and visually compare the rolling 60 day standard deviation for the Materials sectors of each country.
 
 
 ```{r}
