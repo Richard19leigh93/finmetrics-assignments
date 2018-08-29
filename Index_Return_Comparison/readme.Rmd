@@ -74,18 +74,15 @@ Cap_Weighted_monthly_index_returns %>%
   facet_wrap(~Universe) +
   theme(axis.text.x = element_text(angle=90))
 
-  
-  
-
 #graph cap-weighted returns by sector communication sector by country
 Cap_Weighted_monthly_index_returns %>% 
   filter(BICS_LEVEL_1_SECTOR_NAME == "Communications") %>% 
   ggplot() +
   geom_line(aes(date, WeightedReturn, color=Universe))
 
-
 ```
 
+![Cap-weighted returns by sector by country](https://github.com/JannesRed/finmetrics-assignments/blob/master/Index_Return_Comparison/bin/Cap_Weighted_monthly_JALSHAll.png)
 
 
 ### 2. Calculate the sharpe ratio for the equally weighted by country, cap-weighted index returns since 2017.
