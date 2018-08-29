@@ -82,7 +82,7 @@ Cap_Weighted_monthly_index_returns %>%
 
 ```
 
-![Cap-weighted returns by sector by country](https://github.com/JannesRed/finmetrics-assignments/blob/master/Index_Return_Comparison/bin/Cap_Weighted_monthly_JALSHAll.png)
+
 
 
 ### 2. Calculate the sharpe ratio for the equally weighted by country, cap-weighted index returns since 2017.
@@ -176,3 +176,5 @@ chart.RollingPerformance(R = Cap_Weighted_daily_material_sector_returns, FUN = "
     width = 60, main = "Rolling 60 Day Standard Deviation", 
     legend.loc = "bottomleft")
 ```
+![Rolling 60 Day Standard Deviation](https://raw.githubusercontent.com/JannesRed/finmetrics-assignments/master/Index_Return_Comparison/bin/Rolling_60_Day_Standard_Deviation.png)
+
