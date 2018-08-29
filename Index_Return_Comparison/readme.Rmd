@@ -19,7 +19,9 @@ This asssignment compares index returns for the JALSHAll, NKY, and NKY.
  - Code folder contains code for practicals done in class
  - bin is there for all figures and graphs
 
-Some of the code is messy and I'm not sure whether on the right track. Surely there is an easier way.
+Some of the code is messy and I'm not sure whether I'm on the right track. 
+
+Surely there is an easier way. I have to look a bit into graph saving in R, knitr dipslays them better.
 
 # Assignment
 
