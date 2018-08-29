@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1535575436593.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "B80F2CF8",
+    "lastKnownWriteTime" : 1535577380,
+    "last_content_update" : 1535577380780,
+    "path" : "~/GitHub/finmetrics-assignments/Index_Return_Comparison/Code/DailyTRI_assignment.R",
+    "project_path" : "Code/DailyTRI_assignment.R",
+    "properties" : {
+        "cursorPosition" : "150,0",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

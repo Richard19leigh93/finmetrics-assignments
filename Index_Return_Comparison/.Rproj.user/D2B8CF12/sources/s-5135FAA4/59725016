@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1535575405525.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "59725016",
+    "lastKnownWriteTime" : 1535577281,
+    "last_content_update" : 1535577292894,
+    "path" : "~/GitHub/finmetrics-assignments/Index_Return_Comparison/readme.Rmd",
+    "project_path" : "readme.Rmd",
+    "properties" : {
+        "cursorPosition" : "179,30",
+        "last_setup_crc32" : "3EBC6B58bb338d19",
+        "scrollLine" : "146"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
