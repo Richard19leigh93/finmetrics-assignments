@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = False)
 ```
 
 # Aim
@@ -46,7 +46,7 @@ Daily_TRI_NA_omit <-
 
 ### 1. Cap-weighted monthly index returns for every sector for each country.
 
-```{r}
+```{r, include = False}
 
 Cap_Weighted_monthly_index_returns <- 
   Daily_TRI_NA_omit %>% 
@@ -89,7 +89,7 @@ Cap_Weighted_monthly_index_returns %>%
 
 ### 2. Calculate the sharpe ratio for the equally weighted by country, cap-weighted index returns since 2017.
 
-```{r}
+```{r, include = False}
 Cap_Weighted_monthly_index_sharp_ratios <- 
   Cap_Weighted_monthly_index_returns %>% 
   arrange(date) %>%  
@@ -108,7 +108,7 @@ kable_styling(bootstrap_options = "striped", full_width = F)
 The JALSHAll Financial Index outperformed both the SP500 and the NKY at the end of the period.
 
 
-```{r}
+```{r include=False}
 financial_index_performance <- 
   Cap_Weighted_monthly_index_returns %>% 
   filter(BICS_LEVEL_1_SECTOR_NAME %in% "Financials") %>% 
@@ -123,7 +123,7 @@ geom_line(aes(date, CumReturns, color=Universe))
 
 ### 4. Calculate the JALSH index returns, by filtering the top 95% of Market Cap. (Tip: use arrange and cumsum of weights… careful with your group_bys…)
 
-```{r}
+```{r, include=False}
 Cap_Weighted_monthly_JALSHAll <- 
   Daily_TRI_NA_omit %>% 
   arrange(date) %>% 
@@ -156,7 +156,7 @@ geom_line(aes(date, WeightedReturn))
 ### 5. Calculate and visually compare the rolling 60 day standard deviation for the Materials sectors of each country.
 
 
-```{r}
+```{r, include = False}
 
 Cap_Weighted_daily_material_sector_returns <- 
   Daily_TRI_NA_omit %>% 
