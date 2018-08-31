@@ -25,7 +25,7 @@ Surely there is an easier way. I have to look a bit into graph saving in R, knit
 
 # Assignment
 
-```{r, include=FALSE}
+```{r, include=FALSE echo=False}
 # load libraries
 library(rmsfuns)
 load_pkgs <- c("xts", "tidyverse", "tbl2xts", "PerformanceAnalytics", "lubridate", "glue",
